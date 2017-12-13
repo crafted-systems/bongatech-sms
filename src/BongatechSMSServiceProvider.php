@@ -15,8 +15,14 @@ class BongatechSMSServiceProvider extends ServiceProvider
     {
 
         $this->publishes([
-            __DIR__.'/Config/bongatech-sms.php' => config_path('bongatech-sms.php'),
+            __DIR__ . '/Config/bongatech.php' => config_path('bongatech.php'),
         ], 'bongatech_sms_config');
+
+        $this->app->singleton(BongatechSMS::class, function () {
+            return new BongatechSMS(config('bongatech'));
+        });
+
+        $this->app->alias(BongatechSMS::class, 'bongatech-sms');
     }
 
     /**
@@ -27,7 +33,7 @@ class BongatechSMSServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/Config/bongatech-sms.php', 'bongatech-sms'
+            __DIR__ . '/Config/bongatech.php', 'bongatech'
         );
     }
 }

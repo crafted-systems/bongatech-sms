@@ -8,7 +8,8 @@
 
 namespace CraftedSystems\Bongatech;
 
-use GuzzleHttp\Client;
+use Unirest\Request;
+use Unirest\Request\Body;
 
 class BongatechSMS
 {
@@ -63,13 +64,6 @@ class BongatechSMS
     protected $config;
 
     /**
-     * end point url.
-     *
-     * @string endpoint
-     */
-    protected $endpoint;
-
-    /**
      * the message(s) being sent (array of messages in case message is different for each user.
      *
      * @var array.
@@ -81,19 +75,28 @@ class BongatechSMS
      *
      * @var array.
      */
-    protected $recipients;
+    protected $recipient;
 
+    /**
+     * settings .
+     *
+     * @var array.
+     */
+    protected $settings;
 
     /**
      * BongatechSMS constructor.
+     * @param $settings
      * @throws \Exception
      */
-    public function __construct()
+    public function __construct($settings)
     {
+        $this->settings = (object)$settings;
+
         if (
-            empty(config('bongatech-sms.user_id')) ||
-            empty(config('bongatech-sms.password')) ||
-            empty(config('bongatech-sms.sender_id'))
+            empty($this->settings->user_id) ||
+            empty($this->settings->password) ||
+            empty($this->settings->sender_id)
         ) {
             throw new \Exception('Please ensure that all Bongatech configuration variables have been set.');
         }
@@ -116,85 +119,99 @@ class BongatechSMS
      */
     private function setToken()
     {
-        $this->token = md5(config('password'));
+        $this->token = md5($this->settings->password);
     }
 
 
     /**
-     * @param $recipients
-     * @param  $message
-     *
+     * @param $recipient
+     * @param $message
+     * @param null |array $params
+     * @return string
      * @throws \Exception
-     *
-     * @return mixed
      */
-    public function send($recipients, $message)
+    public function send($recipient, $message, $params = null)
     {
-        $this->recipients = $recipients;
-        $this->message = $message;
-        $this->endpoint = self::BASE_URL . self::SMS_ENDPOINT;
+        if (!is_string($message)) {
 
-        if (is_array($this->message) && $this->array_depth($this->message) == 2 && count($this->message) == 1) {
-            if (is_array($this->recipients) && $this->array_depth($this->recipients) == 2 && count($this->recipients) == 1) {
-                $response = $this->sendSMS($this->buildSendObject($this->recipients, $this->message));
-            } else {
-                throw new \Exception('The recipient MUST be an array of depth 2 and count should not be more than 1');
-            }
-        } else {
-            throw new \Exception('Message should be provided as an array whose depth is 2 and count should equal 1');
+            throw new \Exception('The Message Should be a string');
         }
 
+        if (!is_string($recipient)) {
+            throw new \Exception('The Phone number should be a string');
+        }
+
+
+        $this->recipient = array(
+            array(
+                'MSISDN' => $recipient,
+                'LinkID' => '',
+                'SourceID' => !is_null($params) ? $params['SourceID'] : ''
+            )
+        );
+
+        $this->message = array(
+            array(
+                'Text' => $message
+            )
+        );
+
+
+        $response = $this->sendSMS($this->buildSendObject($this->recipient, $this->message));
 
         return $response;
     }
 
+
     /**
-     * send a message to a single recipient.
-     *
      * @param $body
-     *
+     * @return \Unirest\Response
+     * @throws \Unirest\Exception
      */
     private function sendSMS($body)
     {
+        $endpoint = self::BASE_URL . self::SMS_ENDPOINT;
+
         $headers = [
             'Accept' => 'application/json',
         ];
-        return '';
+
+        $response = Request::post($endpoint, $headers, Body::Json($body));
+
+        return collect($response->body[0]);
     }
 
+
     /**
-     * build the send object.
-     *
-     * @param  $recipients
-     * @param $messages
-     *
+     * @param $recipient
+     * @param $message
      * @return array
      */
-    private function buildSendObject($recipients, $messages)
+    private function buildSendObject($recipient, $message)
     {
         $body = [
             'AuthDetails' => [
                 [
-                    'UserID' => config('user_id'),
+                    'UserID' => $this->settings->user_id,
                     'Token' => $this->token,
                     'Timestamp' => $this->timestamp,
 
                 ],
             ],
             'MessageType' => [
-                '0',
-            ],
-            'BatchType' => [
                 '3',
             ],
-            'SourceAddr' => [
-                (string)config('sender_id'),
+            'BatchType' => [
+                '0',
             ],
-            'MessagePayload' => $messages,
-            'DestinationAddr' => $recipients,
+            'SourceAddr' => [
+                (string)$this->settings->sender_id,
+            ],
+            'MessagePayload' => $message,
+            'DestinationAddr' => $recipient,
             'DeliveryRequest' => [
                 [
-                    'EndPoint' => config('callback_url'),
+                    'EndPoint' => $this->settings->call_back_url,
                     'Correlator' => (string)mt_rand(),
                 ],
             ],
@@ -203,33 +220,11 @@ class BongatechSMS
         return $body;
     }
 
-    /**
-     * returns depth of an array.see http://stackoverflow.com/a/262944.
-     *
-     * @param  $array
-     *
-     * @return int
-     */
-    private function array_depth(array $array)
+    public function getBalance()
     {
-        $max_depth = 1;
+        $endpoint = self::BASE_URL . self::GET_BALANCE_ENDPOINT . '?UserID=' . $this->settings->user_id . '&Token=' . md5($this->settings->password);
 
-        foreach ($array as $value) {
-            if (is_array($value)) {
-                $depth = $this->array_depth($value) + 1;
-
-                if ($depth > $max_depth) {
-                    $max_depth = $depth;
-                }
-            }
-        }
-
-        return $max_depth;
-    }
-
-    public static function getBalance()
-    {
-
+        return Request::get($endpoint)->body->Balance;
     }
 
 

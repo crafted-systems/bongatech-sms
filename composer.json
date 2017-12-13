@@ -1,28 +1,31 @@
 {
-    "name": "crafted-systems/bongatech-sms",
-    "description": "A Laravel Package for Sending SMS using Bongatech SMS Gateway",
-    "license": "MIT",
-    "type": "library",
-    "require": {
-        "php": ">=7.0",
-        "illuminate/support": "5.*",
-        "guzzlehttp/guzzle": "^6.2@dev"
-    },
-    "author": {
-        "name": "Crafted Systems ",
-        "email": "hello@crafted.co.ke"
-    },
-    "autoload": {
-        "psr-4": {
-            "CraftedSystems/Bongatech\\": "src/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "CraftedSystems/Bongatech\\BongatechSMSServiceProvider"
-            ]
-        }
-    },
-    "minimum-stability": "dev"
+  "name": "crafted-systems/bongatech-sms",
+  "description": "A Laravel Package for Sending SMS using Bongatech SMS Gateway",
+  "license": "MIT",
+  "type": "library",
+  "require": {
+    "php": ">=7.0",
+    "illuminate/support": "5.*",
+    "mashape/unirest-php": "3.*"
+  },
+  "author": {
+    "name": "Crafted Systems ",
+    "email": "hello@crafted.co.ke"
+  },
+  "autoload": {
+    "psr-4": {
+      "CraftedSystems\\Bongatech\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "CraftedSystems\\Bongatech\\BongatechSMSServiceProvider"
+      ],
+      "aliases": {
+        "Menu": "CraftedSystems\\Bongatech\\Facades\\BongatechSMS"
+      }
+    }
+  },
+  "minimum-stability": "dev"
 }

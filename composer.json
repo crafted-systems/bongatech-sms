@@ -23,7 +23,7 @@
         "CraftedSystems\\Bongatech\\BongatechSMSServiceProvider"
       ],
       "aliases": {
-        "Menu": "CraftedSystems\\Bongatech\\Facades\\BongatechSMS"
+        "BongatechSMS": "CraftedSystems\\Bongatech\\Facades\\BongatechSMS"
       }
     }
   },

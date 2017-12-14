@@ -14,13 +14,6 @@ use Unirest\Request\Body;
 class BongatechSMS
 {
     /**
-     * Version number of the SMS API.
-     *
-     * @var string
-     */
-    const VERSION = '3.0.0';
-
-    /**
      * Base URL.
      *
      * @var string
@@ -156,10 +149,7 @@ class BongatechSMS
             )
         );
 
-
-        $response = $this->sendSMS($this->buildSendObject($this->recipient, $this->message));
-
-        return $response;
+        return $this->sendSMS($this->buildSendObject($this->recipient, $this->message));
     }
 
 
@@ -178,7 +168,7 @@ class BongatechSMS
 
         $response = Request::post($endpoint, $headers, Body::Json($body));
 
-        return collect($response->body[0]);
+        return $response->body[0];
     }
 
 
@@ -220,11 +210,24 @@ class BongatechSMS
         return $body;
     }
 
+
+    /**
+     * @return mixed
+     */
     public function getBalance()
     {
         $endpoint = self::BASE_URL . self::GET_BALANCE_ENDPOINT . '?UserID=' . $this->settings->user_id . '&Token=' . md5($this->settings->password);
 
         return Request::get($endpoint)->body->Balance;
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @return mixed
+     */
+    public static function getDeliveryReport(\Illuminate\Http\Request $request)
+    {
+        return json_decode($request->getContent());
     }
 
 

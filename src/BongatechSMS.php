@@ -218,7 +218,7 @@ class BongatechSMS
     {
         $endpoint = self::BASE_URL . self::GET_BALANCE_ENDPOINT . '?UserID=' . $this->settings->user_id . '&Token=' . md5($this->settings->password);
 
-        return Request::get($endpoint)->body->Balance;
+        return (float)Request::get($endpoint)->body->Balance;
     }
 
     /**
